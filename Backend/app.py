@@ -10,7 +10,7 @@ users={
     "itsjustmaitai":"1234567"
 }
 
-@app.route('/login', methods=['GET'])
+@app.route('/login', methods=['POST'])
 def login():
     data=request.get_json()
 
@@ -21,11 +21,17 @@ def login():
     password=data.get('password')
 
     try:
-        validate_email(email)
-    except EmailNotValidError:
-        return jsonify({"message": "Invalid email format"}), 400
+        valid = validate_email(email, check_deliverability=False)
+
+        email = valid.email  # use normalized, validated email
+    except EmailNotValidError as e:
+        return jsonify({"message": str(e)}), 400
+
     
     if email in users and users[email]==password:
         return jsonify ({'message':'Login successful','status':'Success'})
     else:
         return jsonify ({'message':'Login failed','status':'Failed'})
+    
+if __name__=='__main__':
+    app.run(debug=True)
